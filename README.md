@@ -2,15 +2,6 @@
 There are multiple steps to the installation of Git-Hooks into a repository to grant all levels of checking.
 https://github.com/drwahl/puppet-git-hooks
 
-`$ git add . && git commit -m "test file 2"
-Error: Could not parse for environment production: Syntax error at ':' at C:/repos/product.puppet.module-keyboard/manifests/test.pp:9:37
-Error: puppet syntax error in manifests/test.pp (see above)
-Error: 1 syntax error(s) found in puppet manifests. Commit will be aborted.
-Skipping puppet-lint check due to prior errors.
-rspec not installed. Skipping rspec-puppet tests...
-r10k not installed. Skipping r10k Puppetfile test...
-Error: 1 subhooks failed. Please fix above errors.
-`
 
 # Local check
 ## Pull files and set executable
@@ -22,7 +13,18 @@ Copy or Symlink the './pre-commit' file to <target repo>/.git/hooks/pre-commit i
 `$ ln -s <git-hook-repo>/pre-commit <target repo>/.git/hooks/pre-commit`
 
 ## Result
-When you attempt to run a commit locally, it will refer to this file, which calls shell scripts to lint and check any changed files.
+When you attempt to run a commit locally, it will refer to this file, which calls shell scripts to lint and check any changed files, for example:
+
+
+`$ git add . && git commit -m "test file 2"
+Error: Could not parse for environment production: Syntax error at ':' at C:/repos/product.puppet.module-keyboard/manifests/test.pp:9:37
+Error: puppet syntax error in manifests/test.pp (see above)
+Error: 1 syntax error(s) found in puppet manifests. Commit will be aborted.
+Skipping puppet-lint check due to prior errors.
+rspec not installed. Skipping rspec-puppet tests...
+r10k not installed. Skipping r10k Puppetfile test...
+Error: 1 subhooks failed. Please fix above errors.
+`
 
 # Remote check
 
@@ -52,3 +54,6 @@ chown git /var/opt/gitlab/.puppetlabs`
 Since hooks don't propagate between repos,  you must also copy or Symlink the './pre-receive' file to <target repo>/.git/hooks/pre-commit i.e.
 `$ ln -s <git-hook-repo>/pre-commit <target repo>/.git/hooks/pre-commit`
 You can set configuration options in commit_hooks/config.cfg
+
+## Result
+When you attempt to run a commit locally, it will refer to this file, which calls shell scripts to lint and check any changed files.
