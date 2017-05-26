@@ -1,119 +1,54 @@
-Looking for additional maintners.  I do not use puppet on a daily basis anymore, so I'd appreciate an extra
-help ensuring this project meets the needs of the people using it.  Please contact me through github if you
-are interested in helping maintain this project.  Thank you!
 
-puppet-git-hooks
-================
+There are multiple steps to the installation of Git-Hooks into a repository to grant all levels of checking.
+https://github.com/drwahl/puppet-git-hooks
 
-Git hooks to assist puppet module development.  Client side hooks allow for various checks before commits are staged.  Server side hooks are provided for infrastructural reinforcement of various standardization compliances.
+`$ git add . && git commit -m "test file 2"
+Error: Could not parse for environment production: Syntax error at ':' at C:/repos/product.puppet.module-keyboard/manifests/test.pp:9:37
+Error: puppet syntax error in manifests/test.pp (see above)
+Error: 1 syntax error(s) found in puppet manifests. Commit will be aborted.
+Skipping puppet-lint check due to prior errors.
+rspec not installed. Skipping rspec-puppet tests...
+r10k not installed. Skipping r10k Puppetfile test...
+Error: 1 subhooks failed. Please fix above errors.
+`
 
-Current supported pre-commit (client side) checks
-=================================================
+# Local check
+## Pull files and set executable
+Git Clone the repo to your local machine, then set the pre-commit file to be executable:
+`chmod +x <git-hook-repo>/pre-commit`
 
-* Puppet manifest syntax
-* Puppet epp template syntax
-* Erb template syntax
-* Puppet-lint
-* Rspec-puppet
-* Yaml (hiera data) syntax
-* r10k puppetfile syntax
+## Link files to target repo
+Copy or Symlink the './pre-commit' file to <target repo>/.git/hooks/pre-commit i.e.
+`$ ln -s <git-hook-repo>/pre-commit <target repo>/.git/hooks/pre-commit`
 
-Current supported pre-receive (server side) checks
-==================================================
+## Result
+When you attempt to run a commit locally, it will refer to this file, which calls shell scripts to lint and check any changed files.
 
-* Puppet manifest syntax
-* Puppet epp template syntax
-* Erb template syntax
-* Ruby syntax
-* Puppet-lint
-* Yaml (hiera data) syntax
+# Remote check
 
-Installing dependencies
-=======================
+## Install environment prerequisites
+You need to install ruby, ruby-dev and make as prerequisites for the gems that are required by the checking process:
 
-You can install all required dependencies with bundler. List of dependencies you will find in `Gemfile`. By default it installs puppet in version 3.8.6, if you wish, change it to one, which you use. To install run bundler inside your checkout: 
+`apt-get install Ruby ruby-dev make
+gem install rubygems-update
+update_rubygems
+gem install bundler`
 
-```bash
-bundle install
-```
+## Pull files and set executable
+Git clone the repo to a spare space on your gitlab server (i.e. /media/data) to bring the scripts locally to the machine, then set the pre-receive and post-update files to be executable:
+`chmod +x <repo>/pre-receive
+chmod +x <repo>/post-update`
 
-Usage
-=====
+## Set up hook prerequisites
+Double check the Gemfile in the root of the repo to see which gems will be installed, and which versions, then run:
+`bundle install`
 
-In your git repository you can symlink the pre-commit file from this repository to the .git/hooks/pre-commit of your repository you want to implement this feature.
+## Set up environment
+Create a directory for Git to set the default puppetlabs settings. By default git runs out of /var/opt/gitlab. After some testing I found it easier to simply create a .puppetlabs folder here than troubleshoot any further as to why it wasn't utilising the homedir I set up in /home :)
+`mkdir /var/opt/gitlab/.puppetlabs
+chown git /var/opt/gitlab/.puppetlabs`
 
-```bash
-$ ln -s /path/to/this/repo/puppet-git-hooks/pre-commit .git/hooks/pre-commit
-```
-
-If you are using git submodules this can be achieved by getting the gitdir from the .git file in your submodule and symlinking to that gitdir location/
-
-```bash
-$ cat .git
-$ ln -s /path/to/this/repo/puppet-git-hooks/pre-commit ../path/to/git/dir/from/previous/command/hooks/pre-commit
-```
-
-deploy-git-hook
-===============
-
-  usage: deploy-git-hook -d /path/to/git/repository [-a] [-c] [-r] [-u]
-
-    -h            this help screen
-    -d path       install the hooks to the specified path
-    -a            deploy pre-commit and pre-receive hooks
-    -c            deploy only the pre-commit hook
-    -r            deploy only the pre-receive hook
-    -u            deploy only the post-update hook
-    -g            enable to install in Git Lab repo custom_hooks
-
-  returns status code of 0 for success, otherwise, failure
-
-  examples:
-
-  1) to install pre-commit and pre-receive the hooks to foo git repo:
-
-    deploy-git-hook -d /path/to/foo -a
-
-  2) to install only the pre-commit hook to bar git repo:
-
-    deploy-git-hook -d /path/to/bar -c
-
-  3) to install only the pre-commit and pre-receive hook to foobar git repo:
-
-    deploy-git-hook -d /path/to/foobar -c -r
-
-In a wrapper
-===============
-You can call from your own custom pre-commit. This allows you to combine these with your own checks
-
-For example, if you've cloned this repo to ~/.puppet-git-hooks
-
-
-The .git/hooks/pre-commit with your puppet code might look like this
-
-```bash
-#!/bin/bash
-
-# my_other_checks
-
-# puppet-git-hooks
-if [ -e ~/.puppet-git-hooks/pre-commit ]; then
-~/.puppet-git-hooks/pre-commit
-fi
-```
-
-Additionally you can call pre-commit script with two options `-s` and `-a`. First one silence standard informations, which file is currently being checked. Second one allow you to check whole repo, not only files changed locally.
-
-Configuration
-===============
+## Link files to target repo
+Since hooks don't propagate between repos,  you must also copy or Symlink the './pre-receive' file to <target repo>/.git/hooks/pre-commit i.e.
+`$ ln -s <git-hook-repo>/pre-commit <target repo>/.git/hooks/pre-commit`
 You can set configuration options in commit_hooks/config.cfg
-This file is sourced by the pre-commit/receive hooks.
-
-Current options:
-* CHECK_PUPPET_LINT
-* USE_PUPPET_FUTURE_PARSER (only used by Puppet < 4)
-* CHECK_INITIAL_COMMIT
-* CHECK_RSPEC
-* PUPPET_LINT_OPTIONS
-* PUPPET_LINT_FAIL_ON_WARNINGS
-* UNSET_RUBY_ENV (for GitLab users)
